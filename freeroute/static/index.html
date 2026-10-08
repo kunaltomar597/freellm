@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>freeroute</title>
+<style>
+  :root {
+    --bg: #0e0f11; --panel: #16181b; --line: #25282d; --text: #e6e7e9; --dim: #8b9099; --faint: #5b6068;
+    --green: #3fb950; --amber: #d29922; --red: #f85149; --blue: #58a6ff; --grey: #4b5058;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; }
+  main { max-width: 1400px; margin: 0 auto; padding: 24px; }
+  header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px; }
+  h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); margin: 0 0 10px; font-weight: 600; }
+  .live { color: var(--dim); font-size: 12px; display: flex; align-items: center; gap: 6px; }
+  .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; }
+  .live.down i { background: var(--red); }
+  .stats { display: flex; gap: 28px; margin-left: auto; }
+  .stat b { display: block; font-size: 18px; font-weight: 600; }
+  .stat span { color: var(--dim); font-size: 12px; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; align-items: start; }
+  section { margin-bottom: 22px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  .now { padding: 16px; }
+  .now.idle { color: var(--dim); }
+  .job + .job { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
+  .job-top { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+  .tag { font-size: 11px; padding: 1px 7px; border-radius: 4px; background: var(--line); color: var(--dim); text-transform: uppercase; letter-spacing: .04em; }
+  .model-name { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; color: var(--blue); }
+  .activity { font-size: 16px; margin: 4px 0; }
+  .prompt { color: var(--dim); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .elapsed { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .providers { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
+  .prov-head { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px 8px; }
+  .prov-head b { font-weight: 600; }
+  .prov-head small { color: var(--dim); }
+  .prov-head .reset { margin-left: auto; color: var(--faint); font-size: 12px; }
+  .prov-note { padding: 0 14px 8px; color: var(--faint); font-size: 12px; }
+  .nokey .prov-head b { color: var(--dim); }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 6px 14px; border-top: 1px solid var(--line); vertical-align: middle; }
+  td.id { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; word-break: break-all; }
+  td.num { text-align: right; color: var(--dim); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12px; }
+  td.st { white-space: nowrap; font-size: 12.5px; }
+  tr.inuse td { background: rgba(88, 166, 255, .08); }
+  tr.inuse td.id { color: var(--blue); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 7px; vertical-align: 1px; }
+  .s-ready { background: var(--green); } .s-cooldown { background: var(--amber); } .s-exhausted, .s-error { background: var(--red); }
+  .s-invalid, .s-no_key { background: var(--grey); } .s-inuse { background: var(--blue); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .t-ready { color: var(--green); } .t-cooldown { color: var(--amber); } .t-exhausted, .t-error { color: var(--red); }
+  .t-invalid, .t-no_key { color: var(--faint); } .t-inuse { color: var(--blue); }
+  .feed { max-height: 70vh; overflow-y: auto; }
+  .ev { padding: 7px 14px; border-top: 1px solid var(--line); font-size: 12.5px; display: grid; grid-template-columns: 62px 1fr; gap: 8px; }
+  .ev:first-child { border-top: 0; }
+  .ev time { color: var(--faint); font-variant-numeric: tabular-nums; }
+  .ev.warning span { color: var(--amber); } .ev.error span { color: var(--red); } .ev.success span { color: var(--green); }
+  .recent td { font-size: 12.5px; }
+  .recent td.p { color: var(--dim); max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .empty { padding: 14px; color: var(--faint); font-size: 13px; }
+  .top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+  .next { padding: 6px 0; }
+  .next-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; padding: 5px 14px; font-size: 12.5px; align-items: center; }
+  .next-row b { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .next-row span.id { font-family: ui-monospace, "SF Mono", Menlo, monospace; word-break: break-all; }
+  .next-row:first-child span.id { color: var(--green); }
+  .badge { font-size: 10.5px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--faint); margin-left: 6px; white-space: nowrap; }
+  .rank { color: var(--faint); font-size: 11px; margin-left: 6px; white-space: nowrap; }
+  .prov-body { max-height: 330px; overflow-y: auto; }
+  details.missing { margin-top: 14px; }
+  details.missing summary { cursor: pointer; color: var(--dim); font-size: 13px; padding: 6px 0; }
+  .signup { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; margin-top: 8px; }
+  .signup a { display: block; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; color: var(--text); text-decoration: none; font-size: 13px; }
+  .signup a:hover { border-color: var(--blue); }
+  .signup small { display: block; color: var(--faint); font-size: 11.5px; margin-top: 2px; }
+  @media (max-width: 1200px) { .top { grid-template-columns: 1fr; } }
+  @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } .stats { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>freeroute</h1>
+    <span class="live" id="live"><i></i><span>live</span></span>
+    <a href="/workspace" style="color:var(--blue);font-size:13px;text-decoration:none">Open workspace →</a>
+    <div class="stats" id="stats"></div>
+  </header>
+  <div class="layout">
+    <div>
+      <section class="top">
+        <div>
+          <h2>Right now</h2>
+          <div class="panel now idle" id="now">Loading…</div>
+        </div>
+        <div>
+          <h2 id="next-title">Up next</h2>
+          <div class="panel next" id="next"></div>
+        </div>
+      </section>
+      <section>
+        <h2>Providers and models</h2>
+        <div class="providers" id="providers"></div>
+        <details class="missing" id="missing-wrap">
+          <summary id="missing-title"></summary>
+          <div class="signup" id="missing"></div>
+        </details>
+      </section>
+      <section>
+        <h2>Recent requests</h2>
+        <div class="panel"><table class="recent" id="recent"></table></div>
+      </section>
+    </div>
+    <aside>
+      <section>
+        <h2>Live activity</h2>
+        <div class="panel feed" id="feed"></div>
+      </section>
+    </aside>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const clock = (ts) => new Date(ts * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+const clockSec = (ts) => new Date(ts * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }).replace(/\s?[AP]M/, "");
+const num = (n) => Number(n || 0).toLocaleString();
+const dur = (s) => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60;
+  return h ? `${h}h ${m}m` : m ? `${m}m ${String(r).padStart(2, "0")}s` : `${r}s`; };
+
+function describe(m, now) {
+  switch (m.status) {
+    case "ready": return "Ready";
+    case "no_key": return "No key";
+    case "cooldown": return m.until ? `Cooling down ${dur(m.until - now)}` : "Cooling down";
+    case "exhausted": return m.until ? `Used up until ${clock(m.until)}` : "Used up";
+    case "invalid": return "Not usable";
+    case "error": return m.until ? `Error, retry ${clock(m.until)}` : "Error";
+    default: return m.status;
+  }
+}
+
+function render(s) {
+  const now = s.now;
+  const inUse = new Set(s.active.filter((r) => !r.stale && r.model).map((r) => `${r.provider}/${r.model}`));
+
+  const live = s.providers.filter((p) => p.has_key);
+  const usable = live.flatMap((p) => p.models);
+  const ready = usable.filter((m) => m.status === "ready").length;
+  const t = s.totals;
+  $("stats").innerHTML = [
+    [`${live.length}/${s.providers.length}`, "providers ready"],
+    [`${ready}/${usable.length}`, "models ready"], [num(t.requests), "requests today"],
+    [num(t.tokens), "tokens today"], [num(t.limited), "rate limits today"],
+  ].map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
+
+  const jobs = s.active.filter((r) => !r.stale);
+  $("now").className = "panel now" + (jobs.length ? "" : " idle");
+  $("now").innerHTML = jobs.length ? jobs.map((r) => `
+    <div class="job">
+      <div class="job-top">
+        <span class="tag">${esc(r.kind)}</span>
+        ${r.model ? `<span class="model-name">${esc(r.provider)}/${esc(r.model)}</span>` : ""}
+        <span class="elapsed">${dur(now - r.started)}</span>
+      </div>
+      <div class="activity">${esc(r.activity)}</div>
+      <div class="prompt">${esc(r.prompt)}</div>
+    </div>`).join("") : "Idle. Nothing is running. Start something with <code>fr ask</code>.";
+
+  $("next-title").textContent = s.routing === "rank" ? "Up next (smartest available first)" : "Up next (providers.yaml order)";
+  $("next").innerHTML = s.up_next.length ? s.up_next.map((u, i) => `
+    <div class="next-row"><b>${i + 1}</b><span class="id">${esc(u.provider)}/${esc(u.model)}</span>
+      <span>${u.tools ? "" : `<span class="badge">no tools</span>`}<span class="rank">rank ${u.rank}</span></span></div>`).join("")
+    : `<div class="empty">No model is ready. Add keys in .env, or wait for a reset.</div>`;
+
+  const card = (p) => `
+    <div class="panel">
+      <div class="prov-head">
+        <b>${esc(p.label)}</b>
+        <small>${p.models.length} models${p.trust ? ` <span class="badge">third-party</span>` : ""}${p.keyless ? ` <span class="badge">no key</span>` : ""}</small>
+        <span class="reset">resets ${clock(p.next_reset)}</span>
+      </div>
+      ${p.note ? `<div class="prov-note">${esc(p.note)}</div>` : ""}
+      <div class="prov-body"><table>${p.models.length ? p.models.map((m) => {
+        const busy = inUse.has(`${p.name}/${m.id}`);
+        const st = busy ? "inuse" : m.status;
+        return `<tr class="${busy ? "inuse" : ""}" title="${esc(m.error || "")}">
+          <td class="id"><span class="dot s-${st}"></span>${esc(m.id)}${m.tools ? "" : `<span class="badge">no tools</span>`}<span class="rank">#${m.rank}</span></td>
+          <td class="st t-${st}">${busy ? "In use now" : describe(m, now)}</td>
+          <td class="num">${m.attempts ? `${m.ok} ok · ${m.limited} limited` : ""}</td>
+          <td class="num">${m.tokens ? `${num(m.tokens)} tok` : ""}</td>
+        </tr>`;
+      }).join("") : `<tr><td class="empty">No models yet. Run <code>fr sync ${esc(p.name)}</code>.</td></tr>`}</table></div>
+    </div>`;
+  $("providers").innerHTML = live.length ? live.map(card).join("")
+    : `<div class="panel empty">No providers have keys yet. Open the list below, sign up, and paste keys into freeroute/.env.</div>`;
+
+  const missing = s.providers.filter((p) => !p.has_key);
+  $("missing-wrap").style.display = missing.length ? "" : "none";
+  $("missing-title").textContent = `${missing.length} providers without a key: get free keys here`;
+  $("missing").innerHTML = missing.map((p) => `
+    <a href="${esc(p.signup)}" target="_blank" rel="noopener">${esc(p.label)}${p.trust ? ` <span class="badge">third-party</span>` : ""}
+      <small>${p.keyless ? `No key needed: set ${esc(p.key_env)}=1` : esc(p.key_env)} · ${p.discover ? "models via fr sync" : `${p.models.length} models`}</small>
+      <small>${esc(p.note)}</small></a>`).join("");
+
+  $("feed").innerHTML = s.events.length ? s.events.map((e) => `
+    <div class="ev ${esc(e.level)}"><time>${clockSec(e.ts)}</time><span>${esc(e.message)}</span></div>`).join("")
+    : `<div class="empty">No activity yet.</div>`;
+
+  $("recent").innerHTML = s.recent.length ? s.recent.map((r) => `
+    <tr>
+      <td><span class="dot ${r.status === "ok" ? "s-ready" : "s-exhausted"}"></span>${esc(r.kind)}</td>
+      <td class="p" title="${esc(r.prompt)}">${esc(r.prompt)}</td>
+      <td class="id">${r.model ? `${esc(r.provider)}/${esc(r.model)}` : "-"}</td>
+      <td class="num">${r.ended ? dur(r.ended - r.started) : ""}</td>
+      <td class="num">${r.ended ? clock(r.ended) : ""}</td>
+    </tr>`).join("") : `<tr><td class="empty">No requests yet.</td></tr>`;
+}
+
+async function tick() {
+  try {
+    const res = await fetch("/api/state", { cache: "no-store" });
+    render(await res.json());
+    $("live").className = "live";
+    $("live").lastElementChild.textContent = "live";
+  } catch {
+    $("live").className = "live down";
+    $("live").lastElementChild.textContent = "disconnected";
+  }
+}
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>

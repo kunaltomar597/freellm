@@ -1,0 +1,592 @@
+# Generated from FreeLLMAPI's public free-model catalog (2026-10-08) plus live provider lists.
+# Edit freely. Providers without a key in .env are skipped automatically.
+#
+# routing: rank   -> try the smartest available model first, across every provider
+#          order  -> try providers top to bottom, models top to bottom
+# rank:           intelligence rank from the catalog (lower = smarter)
+# tools:          false = the model cannot call tools, so the coding agent skips it
+# shared_limits:  one limit covers every model of the provider
+# keyless:        no key needed; set the key_env variable to 1 in .env to opt in
+# discover:       model list is fetched by `fr sync` instead of listed here
+# context:        rough input budget in tokens for the coding agent (default 32000; per model too).
+#                 Groq's is its per-minute token limit. Lower it if a provider rejects long requests.
+# hedge_after:    seconds to wait for an answer before also trying the next provider (up to 3 at once);
+#                 the first answer wins. 0 = try one model at a time.
+
+routing: rank
+hedge_after: 20
+
+providers:
+  - name: gemini
+    label: "Google AI Studio"
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+    key_env: GEMINI_API_KEY
+    signup: https://aistudio.google.com/app/apikey
+    note: "Separate quota per model"
+    reset: pacific
+    context: 200000
+    models:
+      - {id: "gemini-3.8-flash", rank: 25, tools: true}
+      - {id: "gemini-3.7-flash", rank: 29, tools: true}
+      - {id: "gemini-3.6-flash", rank: 39, tools: true}
+      - {id: "gemini-3.5-flash", rank: 41, tools: true}
+      - {id: "gemini-2.5-pro", rank: 45, tools: true}
+      - {id: "gemini-3.5-flash-lite", rank: 63, tools: true}
+      - {id: "gemini-3-flash-preview", rank: 71, tools: true}
+      - {id: "gemini-3.1-flash-lite", rank: 75, tools: true}
+      - {id: "gemini-2.5-flash", rank: 81, tools: true}
+      - {id: "gemini-2.5-flash-lite", rank: 89, tools: true}
+      - {id: "gemma-4-31b-it", rank: 69, tools: false}
+      - {id: "gemma-4-26b-a4b-it", rank: 73, tools: false}
+
+  - name: nvidia
+    label: "NVIDIA NIM"
+    base_url: https://integrate.api.nvidia.com/v1
+    key_env: NVIDIA_API_KEY
+    signup: https://build.nvidia.com
+    note: "~40 requests/min across all models"
+    shared_limits: true
+    timeout: 180
+    context: 128000
+    models:
+      - {id: "z-ai/glm-5.3", rank: 17, tools: true}
+      - {id: "moonshotai/kimi-k3", rank: 19, tools: true}
+      - {id: "deepseek-ai/deepseek-v4.1-flash", rank: 36, tools: true}
+      - {id: "moonshotai/kimi-k2.6", rank: 52, tools: true}
+      - {id: "nvidia/nemotron-3-ultra-550b-a55b", rank: 61, tools: true}
+      - {id: "meta/muse-glimmer-30b", rank: 67, tools: true}
+      - {id: "poolside/laguna-xs-2.1", rank: 77, tools: true}
+      - {id: "nvidia/nemotron-3-super-120b-a12b", rank: 81, tools: true}
+      - {id: "nvidia/nemotron-3.5-lightning-30b-a3b", rank: 81, tools: true}
+      - {id: "openai/gpt-oss-20b", rank: 89, tools: true}
+      - {id: "meta/llama-3.2-90b-vision-instruct", rank: 95, tools: true}
+      - {id: "meta/llama-3.2-11b-vision-instruct", rank: 97, tools: true}
+      - {id: "google/gemma-4-31b-it", rank: 69, tools: false}
+      - {id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", rank: 89, tools: false}
+
+  - name: groq
+    label: "Groq"
+    base_url: https://api.groq.com/openai/v1
+    key_env: GROQ_API_KEY
+    signup: https://console.groq.com/keys
+    note: "Fastest; 8K tokens/min per model"
+    context: 8000
+    models:
+      - {id: "qwen/qwen3.8-27b", rank: 39, tools: true}
+      - {id: "openai/gpt-oss-120b", rank: 83, tools: true}
+      - {id: "openai/gpt-oss-20b", rank: 89, tools: true}
+      - {id: "openai/gpt-oss-safeguard-20b", rank: 91, tools: true}
+      - {id: "allam-2-7b", rank: 101, tools: false}
+
+  - name: cloudflare
+    label: "Cloudflare Workers AI"
+    base_url: https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/v1
+    key_env: CLOUDFLARE_API_TOKEN
+    signup: https://dash.cloudflare.com/profile/api-tokens
+    note: "10,000 neurons/day shared"
+    shared_limits: true
+    context: 24000
+    models:
+      - {id: "@cf/qwen/qwen3.8-27b", rank: 39, tools: true}
+      - {id: "@cf/zai-org/glm-4.7-flash", rank: 77, tools: true}
+      - {id: "@cf/openai/gpt-oss-120b", rank: 83, tools: true}
+      - {id: "@cf/qwen/qwq-32b", rank: 88, tools: true}
+      - {id: "@cf/openai/gpt-oss-20b", rank: 89, tools: true}
+      - {id: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b", rank: 90, tools: true}
+      - {id: "@cf/meta/llama-4-scout-17b-16e-instruct", rank: 91, tools: true}
+      - {id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast", rank: 91, tools: true}
+      - {id: "@cf/qwen/qwen3-30b-a3b-fp8", rank: 92, tools: true}
+      - {id: "@cf/mistralai/mistral-small-3.1-24b-instruct", rank: 93, tools: true}
+      - {id: "@cf/meta/llama-3.1-8b-instruct-fp8", rank: 93, tools: true}
+      - {id: "@cf/qwen/qwen2.5-coder-32b-instruct", rank: 94, tools: true}
+      - {id: "@cf/google/gemma-4-26b-a4b-it", rank: 73, tools: false}
+      - {id: "@cf/nvidia/nemotron-3-120b-a12b", rank: 81, tools: false}
+      - {id: "@cf/meta/llama-3.2-3b-instruct", rank: 95, tools: false}
+      - {id: "@cf/meta/llama-3.2-11b-vision-instruct", rank: 97, tools: false}
+      - {id: "@cf/aisingapore/gemma-sea-lion-v4-27b-it", rank: 97, tools: false}
+      - {id: "@cf/meta/llama-3.2-1b-instruct", rank: 97, tools: false}
+      - {id: "@cf/ibm-granite/granite-4.0-h-micro", rank: 101, tools: false}
+      - {id: "@cf/mistral/mistral-7b-instruct-v0.2-lora", rank: 101, tools: false}
+      - {id: "@cf/meta-llama/llama-2-7b-chat-hf-lora", rank: 101, tools: false}
+      - {id: "@cf/moondream/moondream3.1-9B-A2B", rank: 103, tools: false}
+      - {id: "@cf/google/gemma-2b-it-lora", rank: 105, tools: false}
+      - {id: "@cf/google/gemma-7b-it-lora", rank: 105, tools: false}
+
+  - name: mistral
+    label: "Mistral"
+    base_url: https://api.mistral.ai/v1
+    key_env: MISTRAL_API_KEY
+    signup: https://console.mistral.ai/api-keys
+    note: "2 requests/min, big monthly budget"
+    shared_limits: true
+    models:
+      - {id: "mistral-code-latest", rank: 89, tools: true}
+      - {id: "ministral-14b-latest", rank: 95, tools: true}
+      - {id: "ministral-14b-2512", rank: 95, tools: true}
+      - {id: "ministral-8b-latest", rank: 97, tools: true}
+      - {id: "ministral-3b-2512", rank: 97, tools: true}
+      - {id: "ministral-3b-latest", rank: 97, tools: true}
+      - {id: "ministral-8b-2512", rank: 97, tools: true}
+      - {id: "codestral-latest", rank: 99, tools: true}
+      - {id: "codestral-2508", rank: 99, tools: true}
+      - {id: "voxtral-small-2507", rank: 101, tools: true}
+      - {id: "voxtral-small-latest", rank: 101, tools: true}
+
+  - name: zai
+    label: "Z.ai (GLM)"
+    base_url: https://api.z.ai/api/paas/v4
+    key_env: ZAI_API_KEY
+    signup: https://z.ai
+    note: "GLM Flash models free, ~1M tokens/day"
+    context: 128000
+    models:
+      - {id: "glm-4.7-flash", rank: 77, tools: true}
+      - {id: "glm-4.5-flash", rank: 91, tools: true}
+      - {id: "glm-4.6v-flash", rank: 97, tools: true}
+
+  - name: ollama
+    label: "Ollama Cloud"
+    base_url: https://ollama.com/v1
+    key_env: OLLAMA_API_KEY
+    signup: https://ollama.com/settings/keys
+    note: "Light weekly GPU-time allowance"
+    timeout: 180
+    context: 128000
+    models:
+      - {id: "nemotron-3-ultra", rank: 61, tools: true}
+      - {id: "nemotron-3-super", rank: 81, tools: true}
+      - {id: "gpt-oss:120b", rank: 83, tools: true}
+      - {id: "gpt-oss:20b", rank: 89, tools: true}
+      - {id: "nemotron-3-nano:30b", rank: 89, tools: true}
+      - {id: "gemma4:31b", rank: 69, tools: true}
+
+  - name: cohere
+    label: "Cohere"
+    base_url: https://api.cohere.ai/compatibility/v1
+    key_env: COHERE_API_KEY
+    signup: https://dashboard.cohere.com/api-keys
+    note: "Trial key: ~33 requests/day per model"
+    context: 128000
+    models:
+      - {id: "command-a-plus-05-2026", rank: 81, tools: true}
+      - {id: "north-mini-code-1-0", rank: 87, tools: true}
+      - {id: "command-a-reasoning-08-2025", rank: 89, tools: true}
+      - {id: "command-a-03-2025", rank: 93, tools: true}
+      - {id: "command-a-translate-08-2025", rank: 97, tools: true}
+      - {id: "command-r-plus-08-2024", rank: 101, tools: true}
+      - {id: "command-r-08-2024", rank: 103, tools: true}
+      - {id: "command-r7b-12-2024", rank: 103, tools: true}
+      - {id: "command-r7b-arabic-02-2025", rank: 103, tools: true}
+      - {id: "command-a-vision-07-2025", rank: 93, tools: false}
+      - {id: "tiny-aya-global", rank: 97, tools: false}
+      - {id: "tiny-aya-earth", rank: 99, tools: false}
+      - {id: "tiny-aya-fire", rank: 99, tools: false}
+      - {id: "tiny-aya-water", rank: 99, tools: false}
+      - {id: "c4ai-aya-expanse-32b", rank: 103, tools: false}
+      - {id: "c4ai-aya-vision-32b", rank: 103, tools: false}
+
+  - name: llm7
+    label: "LLM7.io"
+    base_url: https://api.llm7.io/v1
+    key_env: LLM7_API_KEY
+    signup: https://token.llm7.io
+    note: "40 requests/min, ~1M tokens/day"
+    models:
+      - {id: "minimax-m2.7", rank: 61, tools: true}
+      - {id: "codestral-latest", rank: 99, tools: true}
+      - {id: "mistral-Nemo-Instruct-2407", rank: 99, tools: true}
+      - {id: "default", rank: 87, tools: false}
+
+  - name: xkiro
+    label: "xKiro"
+    base_url: https://api.xkiro.com/v1
+    key_env: XKIRO_API_KEY
+    signup: https://xkiro.com
+    note: "Third-party gateway: 56 free models, 500K tokens/day"
+    trust: third-party
+    timeout: 95
+    # Ranks for models missing from the FreeLLMAPI catalog are estimates.
+    models:
+      - {id: "qwen/qwen3.8-max:free", rank: 30, tools: true}
+      - {id: "meta/muse-spark-1.3-contributor:free", rank: 34, tools: true}
+      - {id: "qwen/qwen3.7-max:free", rank: 38, tools: true}
+      - {id: "qwen/qwen3.7-plus:free", rank: 45, tools: true}
+      - {id: "qwen/qwen3.6-max-preview:free", rank: 45, tools: true}
+      - {id: "meituan/longcat-2.5-preview:free", rank: 45, tools: true}
+      - {id: "meta/muse-spark-1.2-contributor:free", rank: 46, tools: true}
+      - {id: "mistralai/mistral-large-4-0", rank: 50, tools: true}
+      - {id: "stealth/big-pickle", rank: 50, tools: true}
+      - {id: "stealth/space-bunny-alpha:free", rank: 50, tools: true}
+      - {id: "qwen/qwen3-coder-plus:free", rank: 55, tools: true}
+      - {id: "qwen/qwen3.6-plus:free", rank: 55, tools: true}
+      - {id: "qwen/qwen3.5-397b-a17b:free", rank: 60, tools: true}
+      - {id: "meituan/longcat-2.0", rank: 60, tools: true}
+      - {id: "qwen/qwen3.5-plus:free", rank: 62, tools: true}
+      - {id: "sensenova/sensenova-6.8-flash-lite", rank: 65, tools: true}
+      - {id: "qwen/qwen3.7-flash:free", rank: 69, tools: true}
+      - {id: "qwen/qwen3-max:free", rank: 70, tools: true}
+      - {id: "sensenova/sensenova-6.7-flash-lite", rank: 71, tools: true}
+      - {id: "mistralai/mistral-medium-3.5", rank: 79, tools: true}
+      - {id: "cohere/command-a-plus", rank: 81, tools: true}
+      - {id: "cohere/north-mini-code", rank: 87, tools: true}
+      - {id: "mistralai/mistral-small-2603", rank: 85, tools: true}
+      - {id: "mistralai/mistral-large-2512", rank: 89, tools: true}
+      - {id: "mistralai/devstral-medium", rank: 89, tools: true}
+      - {id: "mistralai/ministral-14b", rank: 95, tools: true}
+      - {id: "mistralai/ministral-8b", rank: 97, tools: true}
+      - {id: "mistralai/ministral-3b", rank: 97, tools: true}
+      - {id: "mistralai/codestral-2508", rank: 99, tools: true}
+
+  - name: electronhub
+    label: "ElectronHub"
+    base_url: https://api.electronhub.ai/v1
+    key_env: ELECTRONHUB_API_KEY
+    signup: https://electronhub.ai
+    note: "Third-party gateway: $0.25/week credit"
+    shared_limits: true
+    trust: third-party
+    models:
+      - {id: "qwen3.8-flash", rank: 27, tools: true}
+      - {id: "qwen3.8-27b", rank: 39, tools: true}
+      - {id: "deepseek-v4-flash", rank: 59, tools: true}
+      - {id: "nemotron-3-ultra-550b-a55b", rank: 61, tools: true}
+      - {id: "ling-3.0-flash-sante", rank: 65, tools: true}
+      - {id: "gemma-4-31b-it", rank: 69, tools: true}
+      - {id: "gemma-4-26b-a4b-it", rank: 73, tools: true}
+      - {id: "nemotron-3-super-120b-a12b", rank: 81, tools: true}
+      - {id: "nemotron-3.5-lightning", rank: 81, tools: true}
+      - {id: "gpt-oss-120b", rank: 83, tools: true}
+      - {id: "llama-4-maverick-17b-128e-instruct", rank: 87, tools: true}
+      - {id: "qwen3-coder-30-a3b-instruct", rank: 88, tools: true}
+      - {id: "nemotron-3-nano-omni-30b-a3b-reasoning", rank: 89, tools: true}
+      - {id: "llama-4-scout-17b-16e-instruct", rank: 91, tools: true}
+      - {id: "qwen-2.5-72b-instruct", rank: 92, tools: true}
+      - {id: "qwen3-30b-a3b-instruct-2507", rank: 92, tools: true}
+      - {id: "qwen-2.5-32b-instruct", rank: 93, tools: true}
+      - {id: "qwen-2.5-coder-32b-instruct", rank: 94, tools: true}
+      - {id: "llama-3.2-3b", rank: 95, tools: true}
+      - {id: "qwen-2.5-7b-instruct", rank: 95, tools: true}
+      - {id: "qwen-2.5-coder-7b-instruct", rank: 95, tools: true}
+      - {id: "llama-3.2-1b", rank: 97, tools: true}
+
+  - name: nara
+    label: "NaraRouter"
+    base_url: https://router.bynara.id/v1
+    key_env: NARA_API_KEY
+    signup: https://bynara.id
+    note: "Third-party gateway: 7M tokens/day, Telegram verification"
+    shared_limits: true
+    trust: third-party
+    models:
+      - {id: "laguna-s-2.1", rank: 57, tools: true}
+      - {id: "agnes-2.5-flash", rank: 63, tools: true}
+
+  - name: requesty
+    label: "Requesty"
+    base_url: https://router.requesty.ai/v1
+    key_env: REQUESTY_API_KEY
+    signup: https://requesty.ai
+    note: "Third-party router: 200 requests/day shared"
+    shared_limits: true
+    trust: third-party
+    models:
+      - {id: "nvidia/nemotron-3-ultra-550b-a55b", rank: 61, tools: true}
+      - {id: "google/gemma-4-31b-it", rank: 69, tools: true}
+      - {id: "nvidia/nemotron-3-super-120b-a12b", rank: 81, tools: true}
+      - {id: "nvidia/nemotron-3.5-lightning-30b-a3b", rank: 81, tools: true}
+      - {id: "mistral/leanstral-1-5", rank: 97, tools: true}
+      - {id: "nvidia/muse-glimmer-30b", rank: 73, tools: true}
+      - {id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", rank: 89, tools: true}
+      - {id: "novita/ling-3.1-flash", rank: 75, tools: true}
+      - {id: "nvidia/nemotron-3-nano-30b-a3b", rank: 100, tools: true}
+      - {id: "novita/inclusionai/ling-3.0-tiny", rank: 115, tools: true}
+      - {id: "poolside/laguna-m.1", rank: 90, tools: false}
+      - {id: "poolside/laguna-xs.2", rank: 110, tools: false}
+
+  - name: bazaarlink
+    label: "BazaarLink"
+    base_url: https://bazaarlink.ai/api/v1
+    key_env: BAZAARLINK_API_KEY
+    signup: https://bazaarlink.ai
+    note: "Third-party gateway: 50 requests/day"
+    shared_limits: true
+    trust: third-party
+    models:
+      - {id: "deepseek/deepseek-v4-flash-0731free:free", rank: 38, tools: true}
+      - {id: "qwen/qwen3.7-flash:free", rank: 69, tools: true}
+      - {id: "auto:free", rank: 83, tools: true}
+
+  - name: unorouter
+    label: "UnoRouter"
+    base_url: https://api.unorouter.com/v1
+    key_env: UNOROUTER_API_KEY
+    signup: https://unorouter.com
+    note: "Third-party gateway: 1 request/min per model"
+    trust: third-party
+    models:
+      - {id: "glm-5.3:free", rank: 17, tools: true}
+      - {id: "glm-5.3-flash:free", rank: 23, tools: true}
+      - {id: "qwen3.8-flash-next:free", rank: 27, tools: true}
+      - {id: "deepseek-v4-flash:free", rank: 38, tools: true}
+      - {id: "glm-5.2:free", rank: 39, tools: true}
+      - {id: "qwen3.8-27b:free", rank: 39, tools: true}
+      - {id: "deepseek-v4-pro:free", rank: 46, tools: true}
+      - {id: "laguna-s-2.1:free", rank: 57, tools: true}
+      - {id: "minimax-m2.7:free", rank: 61, tools: true}
+      - {id: "nemotron-3-ultra-550b-a55b:free", rank: 61, tools: true}
+      - {id: "qwen3.6-plus:free", rank: 65, tools: true}
+      - {id: "gemini-3.1-flash-lite:free", rank: 75, tools: true}
+      - {id: "glm-4.7-flash:free", rank: 77, tools: true}
+      - {id: "north-mini-code:free", rank: 87, tools: true}
+      - {id: "gpt-oss-20b:free", rank: 89, tools: true}
+      - {id: "qwen2.5-coder-32b:free", rank: 94, tools: true}
+      - {id: "codestral-latest:free", rank: 99, tools: true}
+
+  - name: radeon
+    label: "AMD Radeon Cloud"
+    base_url: https://developer.amd.com.cn/radeon/api/v1
+    key_env: RADEON_API_KEY
+    signup: https://developer.amd.com.cn
+    note: "China-hosted; daily allowance"
+    trust: third-party
+    models:
+      - {id: "Qwen3.8-Flash-Next", rank: 27, tools: true}
+      - {id: "DeepSeek-V4-Flash", rank: 59, tools: true}
+
+  - name: agnes
+    label: "Agnes AI"
+    base_url: https://apihub.agnes-ai.com/v1
+    key_env: AGNES_API_KEY
+    signup: https://agnes-ai.com
+    note: "Promotional $0 models"
+    trust: third-party
+    models:
+      - {id: "agnes-2.5-flash", rank: 63, tools: true}
+      - {id: "agnes-2.0-flash", rank: 79, tools: true}
+
+  - name: routeway
+    label: "Routeway"
+    base_url: https://api.routeway.ai/v1
+    key_env: ROUTEWAY_API_KEY
+    signup: https://routeway.ai
+    note: "Third-party: ~5 requests/min, 200/day"
+    trust: third-party
+    headers:
+      User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+    models:
+      - {id: "muse-glimmer-30b:free", rank: 67, tools: true}
+
+  - name: pollinations
+    label: "Pollinations"
+    base_url: https://gen.pollinations.ai/v1
+    key_env: POLLINATIONS_API_KEY
+    signup: https://enter.pollinations.ai/keys
+    note: "Spends free Quest Pollen (sk_ key); 402 when the balance runs out"
+    shared_limits: true
+    trust: third-party
+    models:
+      - {id: "z-ai/glm-5.3-flash", rank: 23, tools: true}
+      - {id: "deepseek/deepseek-v4.1-flash", rank: 36, tools: true}
+      - {id: "minimax/minimax-m3", rank: 48, tools: true}
+      - {id: "nvidia/nemotron-3-ultra", rank: 61, tools: true}
+      - {id: "community/YoannDev90/muse-glimmer-30b:free", rank: 67, tools: true}
+      - {id: "nvidia/nemotron-3.5-lightning", rank: 81, tools: true}
+      - {id: "openai/gpt-oss-20b", rank: 89, tools: true}
+
+  - name: openrouter
+    label: "OpenRouter"
+    base_url: https://openrouter.ai/api/v1
+    key_env: OPENROUTER_API_KEY
+    signup: https://openrouter.ai/settings/keys
+    note: "50 requests/day shared by all free models"
+    shared_limits: true
+    headers:
+      HTTP-Referer: "http://localhost"
+      X-Title: "freeroute"
+    context: 64000
+    models:
+      - {id: "dots-studio/dots-3-note-preview:free", rank: 35, tools: true}
+      - {id: "poolside/laguna-s-2.1:free", rank: 57, tools: true}
+      - {id: "nvidia/nemotron-3-ultra-550b-a55b:free", rank: 61, tools: true}
+      - {id: "inclusionai/ling-3.0-flash-sante:free", rank: 65, tools: true}
+      - {id: "nvidia/nemotron-3-super-120b-a12b:free", rank: 81, tools: true}
+      - {id: "nvidia/nemotron-3.5-lightning:free", rank: 81, tools: true}
+      - {id: "cohere/north-mini-code:free", rank: 87, tools: true}
+      - {id: "liquid/lfm-2.5-2.6b:free", rank: 90, tools: true}
+      - {id: "google/gemma-4-31b-it:free", rank: 69, tools: false}
+      - {id: "google/gemma-4-26b-a4b-it:free", rank: 73, tools: false}
+      - {id: "poolside/laguna-xs-2.1:free", rank: 77, tools: false}
+      - {id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", rank: 89, tools: false}
+
+  - name: kilo
+    label: "Kilo Gateway (no key)"
+    base_url: https://api.kilo.ai/api/gateway/v1
+    key_env: KILO_ENABLED
+    signup: https://kilo.ai
+    note: "No key. 200 requests/hour per IP; prompts logged for training"
+    keyless: true
+    trust: third-party
+    context: 64000
+    models:
+      - {id: "dots-studio/dots-3-note-preview:free", rank: 35, tools: true}
+      - {id: "thinkingmachines/inkling-small:free", rank: 55, tools: true}
+      - {id: "poolside/laguna-s-2.1:free", rank: 57, tools: true}
+      - {id: "nvidia/nemotron-3-ultra-550b-a55b:free", rank: 61, tools: true}
+      - {id: "inclusionai/ling-3.0-flash-sante:free", rank: 65, tools: true}
+      - {id: "poolside/laguna-xs-2.1:free", rank: 77, tools: true}
+      - {id: "kilo-auto/free", rank: 79, tools: true}
+      - {id: "nvidia/nemotron-3-super-120b-a12b:free", rank: 81, tools: true}
+      - {id: "openrouter/free", rank: 81, tools: true}
+      - {id: "nvidia/nemotron-3.5-lightning:free", rank: 81, tools: true}
+      - {id: "cohere/north-mini-code:free", rank: 87, tools: true}
+      - {id: "liquid/lfm-2.5-2.6b:free", rank: 90, tools: true}
+      - {id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", rank: 89, tools: false}
+
+  - name: ovh
+    label: "OVHcloud (no key)"
+    base_url: https://oai.endpoints.kepler.ai.cloud.ovh.net/v1
+    key_env: OVH_ENABLED
+    signup: https://endpoints.ai.cloud.ovh.net
+    note: "No key. 2 requests/min per model"
+    keyless: true
+    models:
+      - {id: "Qwen3.8-27B", rank: 39, tools: true}
+      - {id: "Qwen3.6-27B", rank: 65, tools: true}
+      - {id: "Qwen3.5-397B-A17B", rank: 71, tools: true}
+      - {id: "Qwen3.5-9B", rank: 79, tools: true}
+      - {id: "gpt-oss-120b", rank: 83, tools: true}
+      - {id: "Qwen3-Coder-30B-A3B-Instruct", rank: 88, tools: true}
+      - {id: "gpt-oss-20b", rank: 89, tools: true}
+      - {id: "Meta-Llama-3_3-70B-Instruct", rank: 91, tools: true}
+      - {id: "Mistral-Small-3.2-24B-Instruct-2506", rank: 91, tools: true}
+      - {id: "Mistral-7B-Instruct-v0.3", rank: 97, tools: true}
+      - {id: "Mistral-Nemo-Instruct-2407", rank: 99, tools: true}
+      - {id: "Qwen2.5-VL-72B-Instruct", rank: 92, tools: false}
+
+  - name: aion
+    label: "Aion Labs"
+    base_url: https://api.aionlabs.ai/v1
+    key_env: AION_API_KEY
+    signup: https://aionlabs.ai
+    note: "20K tokens/day; no tool calling"
+    models:
+      - {id: "aion-labs/aion-3.5", rank: 63, tools: false}
+      - {id: "aion-labs/aion-3.5-mini", rank: 71, tools: false}
+      - {id: "aion-labs/aion-3.0", rank: 67, tools: false}
+      - {id: "aion-labs/aion-3.0-mini", rank: 75, tools: false}
+      - {id: "aion-labs/aion-2.0", rank: 83, tools: false}
+      - {id: "aion-labs/aion-rp-llama-3.1-8b", rank: 97, tools: false}
+
+  - name: sealion
+    label: "SEA-LION"
+    base_url: https://api.sea-lion.ai/v1
+    key_env: SEALION_API_KEY
+    signup: https://sea-lion.ai
+    note: "10 requests/min; no tool calling"
+    models:
+      - {id: "aisingapore/Qwen-SEA-LION-v4.5-27B-IT", rank: 69, tools: false}
+      - {id: "aisingapore/Nemotron-SEA-LION-v4.8-120B-A12B", rank: 80, tools: false}
+      - {id: "aisingapore/Qwen-SEA-LION-v4-32B-IT", rank: 92, tools: false}
+      - {id: "aisingapore/Llama-SEA-LION-v3-70B-IT", rank: 95, tools: false}
+      - {id: "aisingapore/Gemma-SEA-LION-v4-27B-IT", rank: 97, tools: false}
+
+  - name: huggingface
+    label: "Hugging Face Router"
+    base_url: https://router.huggingface.co/v1
+    key_env: HF_TOKEN
+    signup: https://huggingface.co/settings/tokens
+    note: "$0.10/month credit"
+    shared_limits: true
+    discover:
+      include: "(?i)(qwen|deepseek|glm|kimi|llama|gpt-oss)"
+      limit: 8
+
+  - name: anyapi
+    label: "AnyAPI"
+    base_url: https://api.anyapi.ai/v1
+    key_env: ANYAPI_API_KEY
+    signup: https://anyapi.ai
+    note: "Third-party: 100K tokens/day on free models"
+    trust: third-party
+    discover:
+      include: ":free$"
+      limit: 20
+
+  - name: navy
+    label: "NavyAI"
+    base_url: https://api.navy/v1
+    key_env: NAVY_API_KEY
+    signup: https://api.navy
+    note: "Third-party: 150K tokens/day, 20 requests/min. Premium models need a paid plan"
+    trust: third-party
+    shared_limits: true
+    headers:
+      User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+    models:
+      - {id: "glm-5.3", rank: 17, tools: true}
+      - {id: "glm-5.3-flash", rank: 23, tools: true}
+      - {id: "qwen3.8-27b", rank: 39, tools: true}
+      - {id: "glm-5.2", rank: 39, tools: true}
+      - {id: "deepseek-v4-pro", rank: 46, tools: true}
+      - {id: "minimax-m3", rank: 48, tools: true}
+      - {id: "kimi-k2.7-code", rank: 50, tools: true}
+      - {id: "kimi-k2.6", rank: 52, tools: true}
+      - {id: "deepseek-v4.1-flash", rank: 55, tools: true}
+      - {id: "gemini-3-flash-preview", rank: 71, tools: true}
+      - {id: "gpt-oss-120b", rank: 83, tools: true}
+      - {id: "codestral-latest", rank: 99, tools: true}
+
+  - name: orcarouter
+    label: "OrcaRouter"
+    base_url: https://api.orcarouter.ai/v1
+    key_env: ORCAROUTER_API_KEY
+    signup: https://orcarouter.ai
+    note: "Third-party: free aliases, unpublished limits"
+    trust: third-party
+    discover:
+      include: "(?i)free"
+      limit: 8
+
+  - name: longcat
+    label: "LongCat (Meituan)"
+    base_url: https://api.longcat.chat/openai/v1
+    key_env: LONGCAT_API_KEY
+    signup: https://longcat.chat
+    note: "Free quota after signup + KYC"
+    discover:
+      limit: 4
+
+  - name: experiential
+    label: "Experiential Labs"
+    base_url: https://api.experientiallabs.ai/v1
+    key_env: EXPERIENTIAL_API_KEY
+    signup: https://www.experientiallabs.ai
+    note: "2 free models; the rest spend ~$5/month credit, so they rank last"
+    trust: third-party
+    models:
+      - {id: "ling-3.1-flash", rank: 75, tools: true}
+      - {id: "glm-4.7-flash", rank: 77, tools: true}
+      - {id: "claude-haiku-5.5", rank: 200, tools: true}
+      - {id: "glm-5.3-flash", rank: 201, tools: true}
+      - {id: "grok-code-fast-1", rank: 202, tools: true}
+      - {id: "deepseek-v4-flash-latest", rank: 203, tools: true}
+      - {id: "qwen3.7-flash", rank: 204, tools: true}
+      - {id: "qwen3-coder-30b-a3b-instruct", rank: 205, tools: true}
+
+  - name: deepseek
+    label: "DeepSeek (one-time credit)"
+    base_url: https://api.deepseek.com/v1
+    key_env: DEEPSEEK_API_KEY
+    signup: https://platform.deepseek.com/api_keys
+    note: "5M tokens once, expire after 30 days"
+    discover:
+      limit: 4
+
+  - name: cerebras
+    label: "Cerebras (one-time credit)"
+    base_url: https://api.cerebras.ai/v1
+    key_env: CEREBRAS_API_KEY
+    signup: https://cloud.cerebras.ai
+    note: "$5 once, card required, 30 days"
+    discover:
+      limit: 6
